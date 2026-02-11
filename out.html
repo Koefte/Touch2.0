@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <button id="btn">Increment</button>
+    <p id="touch-p-1">{"Count is: " + count}</p>
+    <script type="module">
+function __binding__1(count){
+	return "Count is: " + count;
+}
+function __update__count(count){
+document.getElementById("touch-p-1").textContent = __binding__1(count)
+}
+let count = 42; __update__count(count);
+        let button = document.getElementById('btn');
+        button.addEventListener('click', () => {
+            count++; __update__count(count);
+        });
+</script>
+</body>
+</html>
