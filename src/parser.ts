@@ -19,9 +19,62 @@ const voidTags = new Set([
 
 const normalizeTag = (tag: string) => tag.trim().toLowerCase();
 
-const extractId = (raw: string): string | undefined => {
-	const match = raw.match(/\bid\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>/]+))/i);
+const extractAttr = (raw: string, attrName: string): string | undefined => {
+	const pattern = new RegExp(
+		`\\b${attrName}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s"'>/]+))`,
+		'i',
+	);
+	const match = raw.match(pattern);
 	return match?.[1] ?? match?.[2] ?? match?.[3];
+};
+
+const extractId = (raw: string): string | undefined => {
+	return extractAttr(raw, 'id');
+};
+
+const extractDisplayIf = (raw: string): string | undefined => {
+	const bracePattern = /\bdisplay-if\s*=\s*{([^}]*)}/i;
+	const braceMatch = raw.match(bracePattern);
+	if (braceMatch) {
+		return `{${braceMatch[1].trim()}}`;
+	}
+	return extractAttr(raw, 'display-if');
+};
+
+const findTagEnd = (html: string, startIndex: number): number => {
+	let inSingleQuote = false;
+	let inDoubleQuote = false;
+	let braceDepth = 0;
+
+	for (let i = startIndex; i < html.length; i += 1) {
+		const char = html[i];
+
+		if (char === "'" && !inDoubleQuote) {
+			inSingleQuote = !inSingleQuote;
+			continue;
+		}
+
+		if (char === '"' && !inSingleQuote) {
+			inDoubleQuote = !inDoubleQuote;
+			continue;
+		}
+
+		if (!inSingleQuote && !inDoubleQuote) {
+			if (char === '{') {
+				braceDepth += 1;
+				continue;
+			}
+			if (char === '}' && braceDepth > 0) {
+				braceDepth -= 1;
+				continue;
+			}
+			if (char === '>' && braceDepth === 0) {
+				return i;
+			}
+		}
+	}
+
+	return -1;
 };
 
 const parseHtml = (html: string): HtmlNode => {
@@ -46,7 +99,7 @@ const parseHtml = (html: string): HtmlNode => {
 			}
 		}
 
-		const close = html.indexOf('>', nextOpen + 1);
+		const close = findTagEnd(html, nextOpen + 1);
 		if (close === -1) {
 			break;
 		}
@@ -89,6 +142,7 @@ const parseHtml = (html: string): HtmlNode => {
 		const node: HtmlNode = {
 			tag: tagName,
 			id: extractId(attrText),
+			displayIf: extractDisplayIf(attrText),
 			content: '',
 			children: [],
 		};

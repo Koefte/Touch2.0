@@ -3,29 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title id="touch-title-6">Document</title>
 </head>
 <body>
     <button id="btn">Increment</button>
-    <p id="touch-p-1">{"Sum of a and b: " + (a + b)}</p>
-    <script type="module">
-function __binding__1(a, b){
-	return "Sum of a and b: " + (a + b);
+    <p id="touch-p-8">{"A is: " + a}</p>
+    <p id="touch-p-9">a is greater than 10</p>
+    <script type="module" id="touch-script-10">
+function __binding__1(a){
+	return "A is: " + a;
 }
-function __update__b(){
-document.getElementById("touch-p-1").textContent = __binding__1(a, b)
+function __binding__2(a){
+	return a>10;
 }
 function __update__a(){
-document.getElementById("touch-p-1").textContent = __binding__1(a, b)
+document.getElementById("touch-p-8").textContent = __binding__1(a)
+if(a>10){
+	document.getElementById("touch-p-9").style.display = "";
+} else {
+	document.getElementById("touch-p-9").style.display = "none";
+}
 }
 let a = 0;
-        let b = 1;
 __update__a();
-__update__b();
         let button = document.getElementById('btn');
         button.addEventListener('click', () => {
             a++; __update__a();
-            b*=3; __update__b();
         });
 </script>
 </body>

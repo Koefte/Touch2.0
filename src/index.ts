@@ -39,6 +39,7 @@ while ((match = variableRegex.exec(scriptTag.content)) !== null) {
 }
 
 htmlContent = preprocessBindings(tree, htmlContent);
+console.log(JSON.stringify(tree, null, 2));
 traverseTree(tree);
 
 function preprocessBindings(node: HtmlNode, html: string): string {
@@ -50,9 +51,7 @@ function preprocessBindings(node: HtmlNode, html: string): string {
 		}
 	};
 
-	if (node.content.startsWith('{') && node.content.endsWith('}')) {
-		ensureId();
-	}
+	ensureId();
 
 	for (const child of node.children) {
 		updatedHtml = preprocessBindings(child, updatedHtml);
@@ -72,7 +71,8 @@ function escapeRegExp(text: string): string {
 
 function addIdToHtml(html: string, tag: string, content: string, id: string): string {
 	const escapedContent = escapeRegExp(content.trim());
-	const tagPattern = `<${tag}([^>]*)>\\s*${escapedContent}\\s*</${tag}>`;
+	const attrPattern = '((?:[^>"\\\'{]|"[^"]*"|\'[^\']*\'|\\{[^}]*\\})*)';
+	const tagPattern = `<${tag}${attrPattern}>\\s*${escapedContent}\\s*</${tag}>`;
 	const regex = new RegExp(tagPattern, 'i');
 	return html.replace(regex, (match, attrs) => {
 		if (/\bid\s*=/.test(attrs)) {
@@ -80,6 +80,10 @@ function addIdToHtml(html: string, tag: string, content: string, id: string): st
 		}
 		return `<${tag}${attrs} id="${id}">${content}</${tag}>`;
 	});
+}
+
+function stripDisplayIfAttributes(html: string): string {
+	return html.replace(/\s*\bdisplay-if\s*=\s*(?:\{[^}]*\}|"[^"]*"|'[^']*'|[^\s"'>]+)/gi, '');
 }
 
 function addUpdateCalls(source: string, variable: Variable): string {
@@ -112,6 +116,15 @@ function addUpdateCalls(source: string, variable: Variable): string {
 }
 
 function traverseTree(node: HtmlNode) {
+	if(node.displayIf !== undefined){
+		const condition = node.displayIf.slice(1, -1).trim();
+		bindings.push({
+			id: `__binding__${bindings.length + 1}`,
+			expression: condition,
+			node,
+			variables: variables.filter(v => condition.includes(v.name)).map(v => v.name)
+		});
+	}
 	if(node.content.startsWith('{') && node.content.endsWith('}')){
 		// Construct a function that evaluates the expression inside the curly braces
 		const expression = node.content.slice(1, -1).trim();
@@ -137,7 +150,7 @@ for (const variable of variables) {
 	code = addUpdateCalls(code, variable);
 }
 
-// Add initialization calls after all variable declarations
+// Add initializatio calls after all variable declarations
 if (variables.length > 0) {
 	const lastVar = variables[variables.length - 1];
 	const initCalls = variables.map(v => `__update__${v.name}();`).join('\n');
@@ -158,6 +171,16 @@ for (const binding of bindings) {
 for(const variable of variables){
 	let functionCode = `function __update__${variable.name}(){\n`;
 	for(const binding of bindings){
+		console.log(binding.node)
+		if(binding.node.displayIf !== undefined){
+			const condition = binding.node.displayIf.slice(1, -1).trim();
+			functionCode += `if(${condition}){\n`;
+			functionCode += `\tdocument.getElementById("${binding.node.id}").style.display = "";\n`;
+			functionCode += `} else {\n`;
+			functionCode += `\tdocument.getElementById("${binding.node.id}").style.display = "none";\n`;
+			functionCode += `}\n`;
+			continue;
+		}
 		if(!binding.node.content.slice(1, -1).trim().includes(variable.name)) continue;
 		functionCode += `document.getElementById("${binding.node.id}").textContent = ${binding.id}(${binding.variables.join(', ')})\n`
 	}
@@ -167,7 +190,7 @@ for(const variable of variables){
 code = bindingFunctionsCode + code;
 scriptTag.content = code;
 
-const updatedHtml = htmlContent.replace(
+let updatedHtml = htmlContent.replace(
 	/<script\b[^>]*>[\s\S]*?<\/script>/i,
 	(scriptBlock) => {
 		const openTagMatch = scriptBlock.match(/<script\b[^>]*>/i);
@@ -175,5 +198,7 @@ const updatedHtml = htmlContent.replace(
 		return `${openTag}\n${code}\n</script>`;
 	}
 );
+
+updatedHtml = stripDisplayIfAttributes(updatedHtml);
 
 fs.writeFileSync('./out.html', updatedHtml, 'utf-8');

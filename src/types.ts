@@ -1,6 +1,7 @@
 export type HtmlNode = {
 	tag: string;
 	id?: string;
+    displayIf?:string;
 	content: string;
 	children: HtmlNode[];
 };

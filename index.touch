@@ -7,14 +7,13 @@
 </head>
 <body>
     <button id="btn">Increment</button>
-    <p>{"Sum of a and b: " + (a + b)}</p>
+    <p>{"A is: " + a}</p>
+    <p display-if={a>10}> a is greater than 10 </p>
     <script type="module">
         Touch a = 0;
-        Touch b = 1;
         let button = document.getElementById('btn');
         button.addEventListener('click', () => {
             a++;
-            b*=3;
         });
     </script>
 </body>
