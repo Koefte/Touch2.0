@@ -18,10 +18,18 @@ function findTag(node: HtmlNode, tagName: string): HtmlNode | null {
 	return null;
 }
 
+function collectTree(node: HtmlNode, arr: HtmlNode[] = []): HtmlNode[] {
+	arr.push(node);
+	for (const child of node.children) {
+		collectTree(child, arr);
+	}
+	return arr;
+}
 
-let htmlContent = fs.readFileSync('./index.touch', 'utf-8');
+
+let htmlContent = fs.readFileSync('./examples/input.touch', 'utf-8');
 const tree = parseHtml(htmlContent);
-
+const flatNodeArr = collectTree(tree);
 
 const scriptTag = findTag(tree, 'script');
 if(!scriptTag){
@@ -74,16 +82,41 @@ function addIdToHtml(html: string, tag: string, content: string, id: string): st
 	const attrPattern = '((?:[^>"\\\'{]|"[^"]*"|\'[^\']*\'|\\{[^}]*\\})*)';
 	const tagPattern = `<${tag}${attrPattern}>\\s*${escapedContent}\\s*</${tag}>`;
 	const regex = new RegExp(tagPattern, 'i');
-	return html.replace(regex, (match, attrs) => {
+	const updated = html.replace(regex, (match, attrs) => {
 		if (/\bid\s*=/.test(attrs)) {
 			return match;
 		}
 		return `<${tag}${attrs} id="${id}">${content}</${tag}>`;
 	});
+
+	if (updated !== html) {
+		return updated;
+	}
+
+	const selfClosingPattern = `<${tag}${attrPattern}\\s*(/?)>`;
+	const selfClosingRegex = new RegExp(selfClosingPattern, 'i');
+	return html.replace(selfClosingRegex, (match, attrs, selfClose) => {
+		if (/\bid\s*=/.test(attrs)) {
+			return match;
+		}
+		let attrsText = attrs as string;
+		let selfCloseFinal = selfClose as string;
+		if (!selfCloseFinal && /\/\s*$/.test(attrsText)) {
+			selfCloseFinal = '/';
+			attrsText = attrsText.replace(/\s*\/\s*$/, '');
+		}
+		const spacer = attrsText === '' ? ' ' : /\s$/.test(attrsText) ? '' : ' ';
+		return `<${tag}${attrsText}${spacer}id="${id}"${selfCloseFinal}>`;
+	});
 }
 
 function stripDisplayIfAttributes(html: string): string {
 	return html.replace(/\s*\bdisplay-if\s*=\s*(?:\{[^}]*\}|"[^"]*"|'[^']*'|[^\s"'>]+)/gi, '');
+}
+
+function stripBindAndOnInputAttributes(html: string): string {
+	const withoutBind = html.replace(/\s*\bbind\s*=\s*(?:\{[^}]*\}|"[^"]*"|'[^']*'|[^\s"'>]+)/gi, '');
+	return withoutBind.replace(/\s*\boninput\s*=\s*(?:\{[^}]*\}|"[^"]*"|'[^']*'|[^\s"'>]+)/gi, '');
 }
 
 function addUpdateCalls(source: string, variable: Variable): string {
@@ -188,8 +221,18 @@ for(const variable of variables){
 	code = functionCode + code;
 }
 code = bindingFunctionsCode + code;
-scriptTag.content = code;
 
+for(const node of flatNodeArr){
+	if(node.tag === 'input' && node.bind){
+		const varName = node.bind.slice(1, -1).trim();
+		if(variables.some(v => v.name === varName)){
+			code += `document.getElementById("${node.id}").addEventListener("input", (e) => { ${varName} = e.target.value; __update__${varName}(); });\n`;
+		}	
+	}
+}
+
+
+scriptTag.content = code;
 let updatedHtml = htmlContent.replace(
 	/<script\b[^>]*>[\s\S]*?<\/script>/i,
 	(scriptBlock) => {
@@ -200,5 +243,6 @@ let updatedHtml = htmlContent.replace(
 );
 
 updatedHtml = stripDisplayIfAttributes(updatedHtml);
+updatedHtml = stripBindAndOnInputAttributes(updatedHtml);
 
 fs.writeFileSync('./out.html', updatedHtml, 'utf-8');

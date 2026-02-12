@@ -32,6 +32,10 @@ const extractId = (raw: string): string | undefined => {
 	return extractAttr(raw, 'id');
 };
 
+const extractBind = (raw: string): string | undefined => {
+	return extractAttr(raw, 'bind');
+}
+
 const extractDisplayIf = (raw: string): string | undefined => {
 	const bracePattern = /\bdisplay-if\s*=\s*{([^}]*)}/i;
 	const braceMatch = raw.match(bracePattern);
@@ -143,6 +147,7 @@ const parseHtml = (html: string): HtmlNode => {
 			tag: tagName,
 			id: extractId(attrText),
 			displayIf: extractDisplayIf(attrText),
+			bind: extractBind(attrText),
 			content: '',
 			children: [],
 		};

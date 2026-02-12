@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Search Engine</title>
+</head>
+<body>
+<div class="app">
+  <h1>Movie Search</h1>
+
+  <input
+    placeholder="Search movies..."
+    bind={query}
+    on:input={search()}
+  />
+  <button on:click={search()}>Search</button>
+
+  <div display-if={loading}>Loading…</div>
+  <div display-if={!loading && results.length === 0}>No results.</div>
+
+  <ul>
+    <li for={movie in results} key={movie.id}>
+      <h3>{movie.title}</h3>
+      <p>{movie.year}</p>
+    </li>
+  </ul>
+</div>
+
+<script>
+Touch query = "";
+Touch loading = false;
+Touch results = [];
+
+function search(){
+  loading = true;
+  // pretend fetch
+  results = [
+    { id: 1, title: "Alien", year: 1979 },
+    { id: 2, title: "Heat", year: 1995 }
+  ];
+  loading = false;
+}
+</script>
+</body>

@@ -1,35 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
+<html lang="en" id="touch-html-2">
+<head id="touch-head-3">
+    <meta charset="UTF-8" id="touch-meta-4">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="touch-title-6">Document</title>
+    <title id="touch-title-6">Input Showcase</title>
 </head>
-<body>
-    <button id="btn">Increment</button>
-    <p id="touch-p-8">{"A is: " + a}</p>
-    <p id="touch-p-9">a is greater than 10</p>
-    <script type="module" id="touch-script-10">
-function __binding__1(a){
-	return "A is: " + a;
+<body id="touch-body-7">
+<div class="app" id="touch-div-8">
+  <h1 id="touch-h1-9">Input Showcase</h1>
+
+  <input
+    placeholder="Search movies..." id="touch-input-10"/>
+  <p id="touch-p-11">{query}</p>
+</div>
+
+<script id="touch-script-12">
+function __binding__1(query){
+	return query;
 }
-function __binding__2(a){
-	return a>10;
+function __update__query(){
+document.getElementById("touch-p-11").textContent = __binding__1(query)
 }
-function __update__a(){
-document.getElementById("touch-p-8").textContent = __binding__1(a)
-if(a>10){
-	document.getElementById("touch-p-9").style.display = "";
-} else {
-	document.getElementById("touch-p-9").style.display = "none";
-}
-}
-let a = 0;
-__update__a();
-        let button = document.getElementById('btn');
-        button.addEventListener('click', () => {
-            a++; __update__a();
-        });
+let query = "";
+__update__query();document.getElementById("touch-input-10").addEventListener("input", (e) => { query = e.target.value; __update__query(); });
+
 </script>
 </body>
-</html>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Showcase</title>
+</head>
+<body>
+<div class="app">
+  <h1>Input Showcase</h1>
+
+  <input
+    placeholder="Search movies..."
+    bind={query}
+    onInput={search()}
+  />
+  <p>{query}</p>
+</div>
+
+<script>
+Touch query = "";
+</script>
+</body>
