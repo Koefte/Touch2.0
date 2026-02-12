@@ -9,6 +9,7 @@ export type Binding = {
     id: string;
     expression: string;
     node: HtmlNode;
+    variables: string[];
 }
 
 export type Variable = {

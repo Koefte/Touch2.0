@@ -7,18 +7,25 @@
 </head>
 <body>
     <button id="btn">Increment</button>
-    <p id="touch-p-1">{"Count is: " + count}</p>
+    <p id="touch-p-1">{"Sum of a and b: " + (a + b)}</p>
     <script type="module">
-function __binding__1(count){
-	return "Count is: " + count;
+function __binding__1(a, b){
+	return "Sum of a and b: " + (a + b);
 }
-function __update__count(count){
-document.getElementById("touch-p-1").textContent = __binding__1(count)
+function __update__b(){
+document.getElementById("touch-p-1").textContent = __binding__1(a, b)
 }
-let count = 42; __update__count(count);
+function __update__a(){
+document.getElementById("touch-p-1").textContent = __binding__1(a, b)
+}
+let a = 0;
+        let b = 1;
+__update__a();
+__update__b();
         let button = document.getElementById('btn');
         button.addEventListener('click', () => {
-            count++; __update__count(count);
+            a++; __update__a();
+            b*=3; __update__b();
         });
 </script>
 </body>

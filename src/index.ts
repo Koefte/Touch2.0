@@ -84,7 +84,7 @@ function addIdToHtml(html: string, tag: string, content: string, id: string): st
 
 function addUpdateCalls(source: string, variable: Variable): string {
 	const name = variable.name;
-	const updateCall = `__update__${name}(${name});`;
+	const updateCall = `__update__${name}();`;
 	let updated = source;
 
 	updated = updated.replace(new RegExp(`\\b${name}\\s*\\+\\+;?`, 'g'), `${name}++; ${updateCall}`);
@@ -101,7 +101,7 @@ function addUpdateCalls(source: string, variable: Variable): string {
 		new RegExp(`\\b${name}\\s*=\\s*[^;\\n]+;?`, 'g'),
 		(match, offset, fullText) => {
 			const before = fullText.slice(0, offset as number);
-			if (/\\b(let|const|var)\\s+$/.test(before)) {
+			if (/\b(let|const|var)\s+$/.test(before)) {
 				return match;
 			}
 			return `${match.replace(/;?$/, '')}; ${updateCall}`;
@@ -119,6 +119,7 @@ function traverseTree(node: HtmlNode) {
 			id: `__binding__${bindings.length + 1}`,
 			expression,
 			node,
+			variables: variables.filter(v => expression.includes(v.name)).map(v => v.name)
 		});
 	}
 
@@ -136,19 +137,29 @@ for (const variable of variables) {
 	code = addUpdateCalls(code, variable);
 }
 
-const bindingArgs = variables.map(v => v.name).join(', ');
+// Add initialization calls after all variable declarations
+if (variables.length > 0) {
+	const lastVar = variables[variables.length - 1];
+	const initCalls = variables.map(v => `__update__${v.name}();`).join('\n');
+	code = code.replace(
+		new RegExp(`(let\\s+${lastVar.name}\\s*=\\s*[^;\\n]+;)`),
+		`$1\n${initCalls}`
+	);
+}
+
 let bindingFunctionsCode = '';
 for (const binding of bindings) {
-	bindingFunctionsCode += `function ${binding.id}(${bindingArgs}){\n`;
+	bindingFunctionsCode += `function ${binding.id}(${binding.variables.join(', ')}){\n`;
 	bindingFunctionsCode += `\treturn ${binding.expression};\n`;
 	bindingFunctionsCode += `}\n`;
 }
 
 
 for(const variable of variables){
-	let functionCode = `function __update__${variable.name}(${variable.name}){\n`;
+	let functionCode = `function __update__${variable.name}(){\n`;
 	for(const binding of bindings){
-		functionCode += `document.getElementById("${binding.node.id}").textContent = ${binding.id}(${bindingArgs})\n`
+		if(!binding.node.content.slice(1, -1).trim().includes(variable.name)) continue;
+		functionCode += `document.getElementById("${binding.node.id}").textContent = ${binding.id}(${binding.variables.join(', ')})\n`
 	}
 	functionCode += "}\n";
 	code = functionCode + code;
