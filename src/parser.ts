@@ -32,6 +32,10 @@ const extractId = (raw: string): string | undefined => {
 	return extractAttr(raw, 'id');
 };
 
+const extractOnInput = (raw: string): string | undefined => {
+	return extractAttr(raw, 'onInput');
+}
+
 const extractBind = (raw: string): string | undefined => {
 	return extractAttr(raw, 'bind');
 }
@@ -148,6 +152,7 @@ const parseHtml = (html: string): HtmlNode => {
 			id: extractId(attrText),
 			displayIf: extractDisplayIf(attrText),
 			bind: extractBind(attrText),
+			onInput: extractOnInput(attrText),
 			content: '',
 			children: [],
 		};

@@ -3,6 +3,7 @@ export type HtmlNode = {
 	id?: string;
     displayIf?:string;
     bind?: string;
+    onInput?: string; 
 	content: string;
 	children: HtmlNode[];
 };

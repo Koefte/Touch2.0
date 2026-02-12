@@ -19,5 +19,8 @@
 
 <script>
 Touch query = "";
+function search(){
+  console.log("you searched something");
+}
 </script>
 </body>

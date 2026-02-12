@@ -47,6 +47,7 @@ while ((match = variableRegex.exec(scriptTag.content)) !== null) {
 }
 
 htmlContent = preprocessBindings(tree, htmlContent);
+htmlContent = wrapInputsWithForm(tree, htmlContent);
 console.log(JSON.stringify(tree, null, 2));
 traverseTree(tree);
 
@@ -63,6 +64,25 @@ function preprocessBindings(node: HtmlNode, html: string): string {
 
 	for (const child of node.children) {
 		updatedHtml = preprocessBindings(child, updatedHtml);
+	}
+
+	return updatedHtml;
+}
+
+function wrapInputsWithForm(node: HtmlNode, html: string, inForm = false): string {
+	let updatedHtml = html;
+	const nextInForm = inForm || node.tag === 'form';
+
+	if (node.tag === 'input' && node.onInput && !nextInForm && node.id) {
+		const escapedId = escapeRegExp(node.id);
+		const formId = `${node.id}__form`;
+		const inputPattern = `<input\\b[^>]*\\bid\\s*=\\s*(?:"${escapedId}"|'${escapedId}')\\s*[^>]*>`;
+		const inputRegex = new RegExp(inputPattern, 'i');
+		updatedHtml = updatedHtml.replace(inputRegex, (match) => `<form id="${formId}">${match}</form>`);
+	}
+
+	for (const child of node.children) {
+		updatedHtml = wrapInputsWithForm(child, updatedHtml, nextInForm);
 	}
 
 	return updatedHtml;
@@ -228,6 +248,10 @@ for(const node of flatNodeArr){
 		if(variables.some(v => v.name === varName)){
 			code += `document.getElementById("${node.id}").addEventListener("input", (e) => { ${varName} = e.target.value; __update__${varName}(); });\n`;
 		}	
+	}
+	if(node.tag === 'input' && node.onInput){
+		const formId = `${node.id}__form`;
+		code += `document.getElementById("${formId}").addEventListener("submit", (e) => { e.preventDefault(); ${node.onInput.slice(1,-1).trim()} });\n`;
 	}
 }
 

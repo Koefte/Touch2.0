@@ -9,8 +9,8 @@
 <div class="app" id="touch-div-8">
   <h1 id="touch-h1-9">Input Showcase</h1>
 
-  <input
-    placeholder="Search movies..." id="touch-input-10"/>
+  <form id="touch-input-10__form"><input
+    placeholder="Search movies..." id="touch-input-10"/></form>
   <p id="touch-p-11">{query}</p>
 </div>
 
@@ -22,7 +22,11 @@ function __update__query(){
 document.getElementById("touch-p-11").textContent = __binding__1(query)
 }
 let query = "";
-__update__query();document.getElementById("touch-input-10").addEventListener("input", (e) => { query = e.target.value; __update__query(); });
+__update__query();
+function search(){
+  console.log("you searched something");
+}document.getElementById("touch-input-10").addEventListener("input", (e) => { query = e.target.value; __update__query(); });
+document.getElementById("touch-input-10__form").addEventListener("submit", (e) => { e.preventDefault(); search() });
 
 </script>
 </body>
