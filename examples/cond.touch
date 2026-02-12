@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <button id="btn">Increment</button>
+    <p>{"A is: " + a}</p>
+    <p display-if={a>10}> a is greater than 10 </p>
+    <script type="module">
+        Touch a = 0;
+        let button = document.getElementById('btn');
+        button.addEventListener('click', () => {
+            a++;
+        });
+    </script>
+</body>
+</html>
