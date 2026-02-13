@@ -5,6 +5,7 @@ export type HtmlNode = {
     bind?: string;
     onInput?: string; 
     onClick?: string;
+    for?: string;
 	content: string;
 	children: HtmlNode[];
 };

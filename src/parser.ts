@@ -44,6 +44,23 @@ const extractOnClick = (raw: string): string | undefined => {
 	return extractAttr(raw, 'onClick');
 }
 
+const extractFor = (raw: string): string | undefined => {
+	const bracePattern = /\bfor\s*=\s*{([^}]*)}/i;
+	const braceMatch = raw.match(bracePattern);
+	if (braceMatch) {
+		return `{${braceMatch[1].trim()}}`;
+	}
+	const value = extractAttr(raw, 'for');
+	if (!value) {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+		return trimmed;
+	}
+	return `{${trimmed}}`;
+}
+
 const extractDisplayIf = (raw: string): string | undefined => {
 	const bracePattern = /\bdisplay-if\s*=\s*{([^}]*)}/i;
 	const braceMatch = raw.match(bracePattern);
@@ -52,6 +69,8 @@ const extractDisplayIf = (raw: string): string | undefined => {
 	}
 	return extractAttr(raw, 'display-if');
 };
+
+
 
 const findTagEnd = (html: string, startIndex: number): number => {
 	let inSingleQuote = false;
@@ -158,6 +177,7 @@ const parseHtml = (html: string): HtmlNode => {
 			bind: extractBind(attrText),
 			onInput: extractOnInput(attrText),
 			onClick: extractOnClick(attrText),
+			for: extractFor(attrText),
 			content: '',
 			children: [],
 		};

@@ -3,21 +3,435 @@
 <head id="touch-head-3">
     <meta charset="UTF-8" id="touch-meta-4">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="touch-title-6">Document</title>
+    <title id="touch-title-6">Movie Search Engine</title>
+    <style id="touch-style-7">:root {
+        color-scheme: light dark;
+        --bg: #0f1115;
+        --panel: #171a21;
+        --panel-2: #1f2330;
+        --accent: #5b8cff;
+        --accent-2: #8dd6ff;
+        --text: #e8ebf0;
+        --muted: #a6adbb;
+        --border: #2a2f3a;
+        --shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Inter", system-ui, -apple-system, sans-serif;
+        background: radial-gradient(circle at top, #1d2233, #0b0e14 55%);
+        color: var(--text);
+      }
+
+      .app {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 48px 24px 80px;
+      }
+
+      header {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+
+      .title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        max-width: 640px;
+        line-height: 1.5;
+      }
+
+      .search-card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+        box-shadow: var(--shadow);
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 14px 16px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--panel-2);
+        color: var(--text);
+        font-size: 1rem;
+        outline: none;
+      }
+
+      .search-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.25);
+      }
+
+      .search-btn {
+        padding: 14px 20px;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(120deg, var(--accent), var(--accent-2));
+        color: #0b0e14;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .status-row {
+        margin: 24px 0 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: rgba(91, 140, 255, 0.1);
+        color: var(--accent-2);
+      }
+
+      .grid {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 18px;
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+        box-shadow: var(--shadow);
+      }
+
+      .poster {
+        width: 100%;
+        aspect-ratio: 2 / 3;
+        object-fit: cover;
+        background: #0b0e14;
+      }
+
+      .card-body {
+        padding: 14px 16px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .card-title {
+        font-weight: 600;
+        font-size: 1.05rem;
+      }
+
+      .card-meta {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .empty-state {
+        padding: 32px;
+        border-radius: 16px;
+        border: 1px dashed var(--border);
+        text-align: center;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .error {
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: rgba(255, 91, 91, 0.12);
+        border: 1px solid rgba(255, 91, 91, 0.3);
+        color: #ffb3b3;
+      }
+
+      @media (max-width: 640px) {
+        .search-card {
+          grid-template-columns: 1fr;
+        }
+      }</style>
 </head>
-<body id="touch-body-7">
-    <button id="touch-button-8">Increment</button>
-    <p id="touch-p-9"></p>
-    <script type="module" id="touch-script-10">
-function __binding__1(count){
-	return "Count is: " + count;
+<body id="touch-body-8">
+<div class="app" id="touch-div-9">
+  <header id="touch-header-10">
+    <div class="title" id="touch-div-11">Movie Search Engine</div>
+    <div class="subtitle" id="touch-div-12">Search movies in real time using the OMDb public dataset. Try “Alien”, “Heat”, or “Interstellar”.</div>
+  </header>
+
+  <div class="search-card">
+    <form id="touch-input-14__form"><input
+      class="search-input"
+      placeholder="Search movies..." id="touch-input-14"/></form>
+    <button class="search-btn" id="touch-button-15">Search</button>
+  </div>
+
+  <div class="status-row">
+    <div class="badge" id="touch-div-17">{"Results: " + results.length}</div>
+    <div id="touch-div-18">Searching…</div>
+  </div>
+
+  <div class="error" id="touch-div-19"></div>
+  <div class="empty-state" id="touch-div-20">No results yet. Try another title.</div>
+
+  <ul class="grid" id="touch-ul-21">
+    <li class="card" id="touch-li-22">
+      <img class="poster" src={movie.poster} alt={movie.title} id="touch-img-23"/>
+      <div class="card-body">
+        <div class="card-title" id="touch-div-25">{movie.title}</div>
+        <div class="card-meta" id="touch-div-26">{movie.year} · {movie.type}</div>
+      </div>
+    </li>
+  </ul>
+</div>
+
+<script id="touch-script-27">
+function __renderTemplate__(template, scope){
+	return template.replace(/\{([^}]+)\}/g, (_, expr) => {
+		try {
+			const keys = Object.keys(scope);
+			const values = Object.values(scope);
+			const fn = new Function(...keys, `return (${expr});`);
+			const result = fn(...values);
+			return result ?? "";
+		} catch (e) {
+			return "";
+		}
+	});
 }
-function __update__count(){
-document.getElementById("touch-p-9").textContent = __binding__1(count)
+function __injectForAttr__(html, id){
+	return html.replace(/^(<[^\s>]+)/, '$1 data-touch-for="' + id + '"');
 }
-let count = 0;
-__update__count();document.getElementById("touch-button-8").addEventListener("click", (e) => { count++; __update__count(); });
+function __insertHtmlAfterMarker__(marker, html){
+	if (!marker || !marker.parentNode) return;
+	const template = document.createElement('template');
+	template.innerHTML = html;
+	const parent = marker.parentNode;
+	const next = marker.nextSibling;
+	parent.insertBefore(template.content, next);
+}
+const __for__template__touch_li_22 = document.getElementById("touch-li-22");
+const __for__parent__touch_li_22 = __for__template__touch_li_22 ? __for__template__touch_li_22.parentElement : null;
+const __for__marker__touch_li_22 = document.createComment("touch-for:touch-li-22");
+const __for__template__touch_li_22__html = __for__template__touch_li_22 ? __injectForAttr__(__for__template__touch_li_22.outerHTML, "touch-li-22") : "";
+if (__for__parent__touch_li_22 && __for__template__touch_li_22) {
+	__for__parent__touch_li_22.replaceChild(__for__marker__touch_li_22, __for__template__touch_li_22);
+}
+function __render__for__touch_li_22(){
+	if (!__for__parent__touch_li_22) return;
+	const __arr__ = (results) ?? [];
+	Array.from(__for__parent__touch_li_22.querySelectorAll('[data-touch-for="touch-li-22"]')).forEach(n => n.remove());
+	let __html__ = "";
+	for (let index = 0; index < __arr__.length; index += 1){
+		const item = __arr__[index];
+		const __scope__ = { movie: item, index, query: query, loading: loading, results: results, error: error };
+		__html__ += __renderTemplate__(__for__template__touch_li_22__html, __scope__);
+	}
+	__insertHtmlAfterMarker__(__for__marker__touch_li_22, __html__);
+}
+function __binding__1(loading, results){
+	return !loading && results.length > 0;
+}
+function __binding__2(results){
+	return "Results: " + results.length;
+}
+function __binding__3(loading){
+	return loading;
+}
+function __binding__4(error){
+	return error !== "";
+}
+function __binding__5(error){
+	return error;
+}
+function __binding__6(query, loading, results, error){
+	return !loading && results.length === 0 && query.trim().length > 0 && error === "";
+}
+function __binding__7(results){
+	return results.length > 0;
+}
+function __update__error(){
+if(!loading && results.length > 0){
+	document.getElementById("touch-div-17").style.display = "";
+} else {
+	document.getElementById("touch-div-17").style.display = "none";
+}
+if(loading){
+	document.getElementById("touch-div-18").style.display = "";
+} else {
+	document.getElementById("touch-div-18").style.display = "none";
+}
+if(error !== ""){
+	document.getElementById("touch-div-19").style.display = "";
+} else {
+	document.getElementById("touch-div-19").style.display = "none";
+}
+document.getElementById("touch-div-19").textContent = __binding__5(error)
+if(!loading && results.length === 0 && query.trim().length > 0 && error === ""){
+	document.getElementById("touch-div-20").style.display = "";
+} else {
+	document.getElementById("touch-div-20").style.display = "none";
+}
+if(results.length > 0){
+	document.getElementById("touch-ul-21").style.display = "";
+} else {
+	document.getElementById("touch-ul-21").style.display = "none";
+}
+}
+function __update__results(){
+if(!loading && results.length > 0){
+	document.getElementById("touch-div-17").style.display = "";
+} else {
+	document.getElementById("touch-div-17").style.display = "none";
+}
+document.getElementById("touch-div-17").textContent = __binding__2(results)
+if(loading){
+	document.getElementById("touch-div-18").style.display = "";
+} else {
+	document.getElementById("touch-div-18").style.display = "none";
+}
+if(error !== ""){
+	document.getElementById("touch-div-19").style.display = "";
+} else {
+	document.getElementById("touch-div-19").style.display = "none";
+}
+if(!loading && results.length === 0 && query.trim().length > 0 && error === ""){
+	document.getElementById("touch-div-20").style.display = "";
+} else {
+	document.getElementById("touch-div-20").style.display = "none";
+}
+if(results.length > 0){
+	document.getElementById("touch-ul-21").style.display = "";
+} else {
+	document.getElementById("touch-ul-21").style.display = "none";
+}
+__render__for__touch_li_22();
+}
+function __update__loading(){
+if(!loading && results.length > 0){
+	document.getElementById("touch-div-17").style.display = "";
+} else {
+	document.getElementById("touch-div-17").style.display = "none";
+}
+if(loading){
+	document.getElementById("touch-div-18").style.display = "";
+} else {
+	document.getElementById("touch-div-18").style.display = "none";
+}
+if(error !== ""){
+	document.getElementById("touch-div-19").style.display = "";
+} else {
+	document.getElementById("touch-div-19").style.display = "none";
+}
+if(!loading && results.length === 0 && query.trim().length > 0 && error === ""){
+	document.getElementById("touch-div-20").style.display = "";
+} else {
+	document.getElementById("touch-div-20").style.display = "none";
+}
+if(results.length > 0){
+	document.getElementById("touch-ul-21").style.display = "";
+} else {
+	document.getElementById("touch-ul-21").style.display = "none";
+}
+}
+function __update__query(){
+if(!loading && results.length > 0){
+	document.getElementById("touch-div-17").style.display = "";
+} else {
+	document.getElementById("touch-div-17").style.display = "none";
+}
+if(loading){
+	document.getElementById("touch-div-18").style.display = "";
+} else {
+	document.getElementById("touch-div-18").style.display = "none";
+}
+if(error !== ""){
+	document.getElementById("touch-div-19").style.display = "";
+} else {
+	document.getElementById("touch-div-19").style.display = "none";
+}
+if(!loading && results.length === 0 && query.trim().length > 0 && error === ""){
+	document.getElementById("touch-div-20").style.display = "";
+} else {
+	document.getElementById("touch-div-20").style.display = "none";
+}
+if(results.length > 0){
+	document.getElementById("touch-ul-21").style.display = "";
+} else {
+	document.getElementById("touch-ul-21").style.display = "none";
+}
+}
+let query = "Alien";
+let loading = false;
+let results = [];
+let error = "";
+__update__query();
+__update__loading();
+__update__results();
+__update__error();
+
+async function search(){
+  const q = query.trim();
+  if (q.length === 0) {
+    results = []; __update__results();
+    error = ""; __update__error();
+    return;
+  }
+  loading = true; __update__loading();
+  error = ""; __update__error();
+  try {
+    const response = await fetch(`https://www.omdbapi.com/?apikey=thewdb&s=${encodeURIComponent(q)}&type=movie`);
+    const data = await response.json();
+    if (data.Response === "True") {
+      results = data.Search.map((item) => ({
+        id: item.imdbID,
+        title: item.Title,
+        year: item.Year,
+        type: item.Type,
+        poster: item.Poster && item.Poster !== "N/A" ? item.Poster : "https://via.placeholder.com/400x600?text=No+Poster",
+      })); __update__results();
+    } else {
+      results = []; __update__results();
+      error = data.Error || "No results."; __update__error();
+    }
+  } catch (e) {
+    results = []; __update__results();
+    error = "Network error. Please try again."; __update__error();
+  } finally {
+    loading = false; __update__loading();
+  }
+}
+
+search();document.getElementById("touch-input-14").addEventListener("input", (e) => { query = e.target.value; __update__query(); });
+document.getElementById("touch-input-14__form").addEventListener("submit", (e) => { e.preventDefault(); search() });
+document.getElementById("touch-button-15").addEventListener("click", (e) => { search() });
 
 </script>
 </body>
-</html>

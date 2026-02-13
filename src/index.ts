@@ -47,6 +47,13 @@ if(!scriptTag){
 }
 let variables: Variable[] = [];
 let bindings: Variable['bindings'] = [];
+type ForDirective = {
+	id: string;
+	item: string;
+	arrayExpr: string;
+	node: HtmlNode;
+};
+let forDirectives: ForDirective[] = [];
 
 const variableRegex = /Touch\s+(\w+)\s*=\s*([^;]+);/g;
 let match: RegExpExecArray | null;
@@ -59,7 +66,6 @@ while ((match = variableRegex.exec(scriptTag.content)) !== null) {
 htmlContent = preprocessBindings(tree, htmlContent);
 htmlContent = stripBindingTextContent(tree, htmlContent);
 htmlContent = wrapInputsWithForm(tree, htmlContent);
-console.log(JSON.stringify(tree, null, 2));
 traverseTree(tree);
 
 function preprocessBindings(node: HtmlNode, html: string): string {
@@ -108,6 +114,10 @@ function escapeRegExp(text: string): string {
 	return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function toSafeIdentifier(value: string): string {
+	return value.replace(/[^a-zA-Z0-9_]/g, '_');
+}
+
 function addIdToHtml(html: string, tag: string, content: string, id: string): string {
 	const escapedContent = escapeRegExp(content.trim());
 	const attrPattern = '((?:[^>"\\\'{]|"[^"]*"|\'[^\']*\'|\\{[^}]*\\})*)';
@@ -151,9 +161,14 @@ function stripBindAndOnInputAttributes(html: string): string {
 	return withoutOnInput.replace(/\s*\bonclick\s*=\s*(?:\{[^}]*\}|"[^"]*"|'[^']*'|[^\s"'>]+)/gi, '');
 }
 
-function stripBindingTextContent(node: HtmlNode, html: string): string {
+function stripForAttributes(html: string): string {
+	return html.replace(/\s+for\s*=\s*(?:\{[^}]*\}|"[^"]*"|'[^']*'|[^\s"'>]+)/gi, '');
+}
+
+function stripBindingTextContent(node: HtmlNode, html: string, insideFor = false): string {
 	let updatedHtml = html;
-	if (node.content.startsWith('{') && node.content.endsWith('}') && node.id) {
+	const hasFor = node.for !== undefined;
+	if (!insideFor && !hasFor && node.content.startsWith('{') && node.content.endsWith('}') && node.id) {
 		const escapedId = escapeRegExp(node.id);
 		const escapedContent = escapeRegExp(node.content.trim());
 		const attrPattern = '([^>]*?)';
@@ -165,7 +180,7 @@ function stripBindingTextContent(node: HtmlNode, html: string): string {
 	}
 
 	for (const child of node.children) {
-		updatedHtml = stripBindingTextContent(child, updatedHtml);
+		updatedHtml = stripBindingTextContent(child, updatedHtml, insideFor || hasFor);
 	}
 
 	return updatedHtml;
@@ -182,47 +197,63 @@ function addUpdateCalls(source: string, variable: Variable): string {
 	updated = updated.replace(new RegExp(`--\\s*${name}\\b;?`, 'g'), `${name}--; ${updateCall}`);
 
 	updated = updated.replace(
-		new RegExp(`\\b${name}\\s*(\\*\\*|[+\\-*/%])=\\s*[^;\\n]+;?`, 'g'),
-		(match) => `${match.replace(/;?$/, '')}; ${updateCall}`
+		new RegExp(`\\b${name}\\s*(\\*\\*|[+\\-*/%])=\\s*[\\s\\S]*?;`, 'g'),
+		(match) => `${match.replace(/;$/, '')}; ${updateCall}`
 	);
 
 	updated = updated.replace(
-		new RegExp(`\\b${name}\\s*=\\s*[^;\\n]+;?`, 'g'),
+		new RegExp(`\\b${name}\\s*=\\s*[\\s\\S]*?;`, 'g'),
 		(match, offset, fullText) => {
 			const before = fullText.slice(0, offset as number);
 			if (/\b(let|const|var)\s+$/.test(before)) {
 				return match;
 			}
-			return `${match.replace(/;?$/, '')}; ${updateCall}`;
+			return `${match.replace(/;$/, '')}; ${updateCall}`;
 		}
 	);
 
 	return updated;
 }
 
-function traverseTree(node: HtmlNode) {
-	if(node.displayIf !== undefined){
-		const condition = node.displayIf.slice(1, -1).trim();
-		bindings.push({
-			id: `__binding__${bindings.length + 1}`,
-			expression: condition,
-			node,
-			variables: variables.filter(v => condition.includes(v.name)).map(v => v.name)
-		});
+function traverseTree(node: HtmlNode, insideFor = false) {
+	const hasFor = node.for !== undefined;
+	if (hasFor) {
+		const forContent = node.for!.slice(1, -1).trim();
+		const forMatch = forContent.match(/^(\w+)\s+in\s+([\s\S]+)$/);
+		if (forMatch) {
+			forDirectives.push({
+				id: node.id ?? '',
+				item: forMatch[1],
+				arrayExpr: forMatch[2].trim(),
+				node,
+			});
+		}
 	}
-	if(node.content.startsWith('{') && node.content.endsWith('}')){
-		// Construct a function that evaluates the expression inside the curly braces
-		const expression = node.content.slice(1, -1).trim();
-		bindings.push({
-			id: `__binding__${bindings.length + 1}`,
-			expression,
-			node,
-			variables: variables.filter(v => expression.includes(v.name)).map(v => v.name)
-		});
+
+	if (!insideFor && !hasFor) {
+		if(node.displayIf !== undefined){
+			const condition = node.displayIf.slice(1, -1).trim();
+			bindings.push({
+				id: `__binding__${bindings.length + 1}`,
+				expression: condition,
+				node,
+				variables: variables.filter(v => condition.includes(v.name)).map(v => v.name)
+			});
+		}
+		if(node.content.startsWith('{') && node.content.endsWith('}')){
+			// Construct a function that evaluates the expression inside the curly braces
+			const expression = node.content.slice(1, -1).trim();
+			bindings.push({
+				id: `__binding__${bindings.length + 1}`,
+				expression,
+				node,
+				variables: variables.filter(v => expression.includes(v.name)).map(v => v.name)
+			});
+		}
 	}
 
 	for(const child of node.children){
-		traverseTree(child);
+		traverseTree(child, insideFor || hasFor);
 	}
 }
 
@@ -252,6 +283,65 @@ for (const binding of bindings) {
 	bindingFunctionsCode += `}\n`;
 }
 
+let forHelpersCode = '';
+if (forDirectives.length > 0) {
+	forHelpersCode += `function __renderTemplate__(template, scope){\n`;
+	forHelpersCode += `\treturn template.replace(/\\{([^}]+)\\}/g, (_, expr) => {\n`;
+	forHelpersCode += `\t\ttry {\n`;
+	forHelpersCode += `\t\t\tconst keys = Object.keys(scope);\n`;
+	forHelpersCode += `\t\t\tconst values = Object.values(scope);\n`;
+	forHelpersCode += `\t\t\tconst fn = new Function(...keys, \`return (\${expr});\`);\n`;
+	forHelpersCode += `\t\t\tconst result = fn(...values);\n`;
+	forHelpersCode += `\t\t\treturn result ?? "";\n`;
+	forHelpersCode += `\t\t} catch (e) {\n`;
+	forHelpersCode += `\t\t\treturn "";\n`;
+	forHelpersCode += `\t\t}\n`;
+	forHelpersCode += `\t});\n`;
+	forHelpersCode += `}\n`;
+	forHelpersCode += `function __injectForAttr__(html, id){\n`;
+	forHelpersCode += `\treturn html.replace(/^(<[^\\s>]+)/, '$1 data-touch-for="' + id + '"');\n`;
+	forHelpersCode += `}\n`;
+	forHelpersCode += `function __insertHtmlAfterMarker__(marker, html){\n`;
+	forHelpersCode += `\tif (!marker || !marker.parentNode) return;\n`;
+	forHelpersCode += `\tconst template = document.createElement('template');\n`;
+	forHelpersCode += `\ttemplate.innerHTML = html;\n`;
+	forHelpersCode += `\tconst parent = marker.parentNode;\n`;
+	forHelpersCode += `\tconst next = marker.nextSibling;\n`;
+	forHelpersCode += `\tparent.insertBefore(template.content, next);\n`;
+	forHelpersCode += `}\n`;
+}
+
+let forRenderCode = '';
+if (forDirectives.length > 0) {
+	for (const directive of forDirectives) {
+		if (!directive.id) {
+			continue;
+		}
+		const safeId = toSafeIdentifier(directive.id);
+		const scopePairs = variables.map(v => `${v.name}: ${v.name}`);
+		const scopeObj = [`${directive.item}: item`, 'index', ...scopePairs].join(', ');
+		forRenderCode += `const __for__template__${safeId} = document.getElementById("${directive.id}");\n`;
+		forRenderCode += `const __for__parent__${safeId} = __for__template__${safeId} ? __for__template__${safeId}.parentElement : null;\n`;
+		forRenderCode += `const __for__marker__${safeId} = document.createComment("touch-for:${directive.id}");\n`;
+		forRenderCode += `const __for__template__${safeId}__html = __for__template__${safeId} ? __injectForAttr__(__for__template__${safeId}.outerHTML, "${directive.id}") : "";\n`;
+		forRenderCode += `if (__for__parent__${safeId} && __for__template__${safeId}) {\n`;
+		forRenderCode += `\t__for__parent__${safeId}.replaceChild(__for__marker__${safeId}, __for__template__${safeId});\n`;
+		forRenderCode += `}\n`;
+		forRenderCode += `function __render__for__${safeId}(){\n`;
+		forRenderCode += `\tif (!__for__parent__${safeId}) return;\n`;
+		forRenderCode += `\tconst __arr__ = (${directive.arrayExpr}) ?? [];\n`;
+		forRenderCode += `\tArray.from(__for__parent__${safeId}.querySelectorAll('[data-touch-for="${directive.id}"]')).forEach(n => n.remove());\n`;
+		forRenderCode += `\tlet __html__ = "";\n`;
+		forRenderCode += `\tfor (let index = 0; index < __arr__.length; index += 1){\n`;
+		forRenderCode += `\t\tconst item = __arr__[index];\n`;
+		forRenderCode += `\t\tconst __scope__ = { ${scopeObj} };\n`;
+		forRenderCode += `\t\t__html__ += __renderTemplate__(__for__template__${safeId}__html, __scope__);\n`;
+		forRenderCode += `\t}\n`;
+		forRenderCode += `\t__insertHtmlAfterMarker__(__for__marker__${safeId}, __html__);\n`;
+		forRenderCode += `}\n`;
+	}
+}
+
 
 for(const variable of variables){
 	let functionCode = `function __update__${variable.name}(){\n`;
@@ -259,20 +349,30 @@ for(const variable of variables){
 		console.log(binding.node)
 		if(binding.node.displayIf !== undefined){
 			const condition = binding.node.displayIf.slice(1, -1).trim();
-			functionCode += `if(${condition}){\n`;
-			functionCode += `\tdocument.getElementById("${binding.node.id}").style.display = "";\n`;
-			functionCode += `} else {\n`;
-			functionCode += `\tdocument.getElementById("${binding.node.id}").style.display = "none";\n`;
-			functionCode += `}\n`;
-			continue;
+			if (binding.expression === condition) {
+				functionCode += `if(${condition}){\n`;
+				functionCode += `\tdocument.getElementById("${binding.node.id}").style.display = "";\n`;
+				functionCode += `} else {\n`;
+				functionCode += `\tdocument.getElementById("${binding.node.id}").style.display = "none";\n`;
+				functionCode += `}\n`;
+				continue;
+			}
 		}
 		if(!binding.node.content.slice(1, -1).trim().includes(variable.name)) continue;
 		functionCode += `document.getElementById("${binding.node.id}").textContent = ${binding.id}(${binding.variables.join(', ')})\n`
+	}
+	for (const directive of forDirectives) {
+		const varPattern = new RegExp(`\\b${variable.name}\\b`);
+		if (varPattern.test(directive.arrayExpr)) {
+			const safeId = toSafeIdentifier(directive.id);
+			functionCode += `__render__for__${safeId}();\n`;
+		}
 	}
 	functionCode += "}\n";
 	code = functionCode + code;
 }
 code = bindingFunctionsCode + code;
+code = forHelpersCode + forRenderCode + code;
 
 for(const node of flatNodeArr){
 	if(node.tag === 'input' && node.bind){
@@ -312,5 +412,6 @@ let updatedHtml = htmlContent.replace(
 
 updatedHtml = stripDisplayIfAttributes(updatedHtml);
 updatedHtml = stripBindAndOnInputAttributes(updatedHtml);
+updatedHtml = stripForAttributes(updatedHtml);
 
 fs.writeFileSync('./out.html', updatedHtml, 'utf-8');

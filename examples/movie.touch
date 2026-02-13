@@ -4,42 +4,261 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Movie Search Engine</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0f1115;
+        --panel: #171a21;
+        --panel-2: #1f2330;
+        --accent: #5b8cff;
+        --accent-2: #8dd6ff;
+        --text: #e8ebf0;
+        --muted: #a6adbb;
+        --border: #2a2f3a;
+        --shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Inter", system-ui, -apple-system, sans-serif;
+        background: radial-gradient(circle at top, #1d2233, #0b0e14 55%);
+        color: var(--text);
+      }
+
+      .app {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 48px 24px 80px;
+      }
+
+      header {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+
+      .title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        max-width: 640px;
+        line-height: 1.5;
+      }
+
+      .search-card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+        box-shadow: var(--shadow);
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 14px 16px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--panel-2);
+        color: var(--text);
+        font-size: 1rem;
+        outline: none;
+      }
+
+      .search-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.25);
+      }
+
+      .search-btn {
+        padding: 14px 20px;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(120deg, var(--accent), var(--accent-2));
+        color: #0b0e14;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .status-row {
+        margin: 24px 0 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: rgba(91, 140, 255, 0.1);
+        color: var(--accent-2);
+      }
+
+      .grid {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 18px;
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+        box-shadow: var(--shadow);
+      }
+
+      .poster {
+        width: 100%;
+        aspect-ratio: 2 / 3;
+        object-fit: cover;
+        background: #0b0e14;
+      }
+
+      .card-body {
+        padding: 14px 16px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .card-title {
+        font-weight: 600;
+        font-size: 1.05rem;
+      }
+
+      .card-meta {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .empty-state {
+        padding: 32px;
+        border-radius: 16px;
+        border: 1px dashed var(--border);
+        text-align: center;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .error {
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: rgba(255, 91, 91, 0.12);
+        border: 1px solid rgba(255, 91, 91, 0.3);
+        color: #ffb3b3;
+      }
+
+      @media (max-width: 640px) {
+        .search-card {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
 </head>
 <body>
 <div class="app">
-  <h1>Movie Search</h1>
+  <header>
+    <div class="title">Movie Search Engine</div>
+    <div class="subtitle">
+      Search movies in real time using the OMDb public dataset. Try “Alien”, “Heat”, or “Interstellar”.
+    </div>
+  </header>
 
-  <input
-    placeholder="Search movies..."
-    bind={query}
-    on:input={search()}
-  />
-  <button onClick={search()}>Search</button>
+  <div class="search-card">
+    <input
+      class="search-input"
+      placeholder="Search movies..."
+      bind={query}
+      onInput={search()}
+    />
+    <button class="search-btn" onClick={search()}>Search</button>
+  </div>
 
-  <div display-if={loading}>Loading…</div>
-  <div display-if={!loading && results.length === 0}>No results.</div>
+  <div class="status-row">
+    <div class="badge" display-if={!loading && results.length > 0}>{"Results: " + results.length}</div>
+    <div display-if={loading}>Searching…</div>
+  </div>
 
-  <ul>
-    <li for={movie in results} key={movie.id}>
-      <h3>{movie.title}</h3>
-      <p>{movie.year}</p>
+  <div class="error" display-if={error !== ""}>{error}</div>
+  <div class="empty-state" display-if={!loading && results.length === 0 && query.trim().length > 0 && error === ""}>
+    No results yet. Try another title.
+  </div>
+
+  <ul class="grid" display-if={results.length > 0}>
+    <li class="card" for={movie in results}>
+      <img class="poster" src={movie.poster} alt={movie.title} />
+      <div class="card-body">
+        <div class="card-title">{movie.title}</div>
+        <div class="card-meta">{movie.year} · {movie.type}</div>
+      </div>
     </li>
   </ul>
 </div>
 
 <script>
-Touch query = "";
+Touch query = "Alien";
 Touch loading = false;
 Touch results = [];
+Touch error = "";
 
-function search(){
+async function search(){
+  const q = query.trim();
+  if (q.length === 0) {
+    results = [];
+    error = "";
+    return;
+  }
   loading = true;
-  // pretend fetch
-  results = [
-    { id: 1, title: "Alien", year: 1979 },
-    { id: 2, title: "Heat", year: 1995 }
-  ];
-  loading = false;
+  error = "";
+  try {
+    const response = await fetch(`https://www.omdbapi.com/?apikey=thewdb&s=${encodeURIComponent(q)}&type=movie`);
+    const data = await response.json();
+    if (data.Response === "True") {
+      results = data.Search.map((item) => ({
+        id: item.imdbID,
+        title: item.Title,
+        year: item.Year,
+        type: item.Type,
+        poster: item.Poster && item.Poster !== "N/A" ? item.Poster : "https://via.placeholder.com/400x600?text=No+Poster",
+      }));
+    } else {
+      results = [];
+      error = data.Error || "No results.";
+    }
+  } catch (e) {
+    results = [];
+    error = "Network error. Please try again.";
+  } finally {
+    loading = false;
+  }
 }
+
+search();
 </script>
 </body>
