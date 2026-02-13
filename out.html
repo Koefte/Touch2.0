@@ -3,30 +3,21 @@
 <head id="touch-head-3">
     <meta charset="UTF-8" id="touch-meta-4">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="touch-title-6">Input Showcase</title>
+    <title id="touch-title-6">Document</title>
 </head>
 <body id="touch-body-7">
-<div class="app" id="touch-div-8">
-  <h1 id="touch-h1-9">Input Showcase</h1>
-
-  <form id="touch-input-10__form"><input
-    placeholder="Search movies..." id="touch-input-10"/></form>
-  <p id="touch-p-11">{query}</p>
-</div>
-
-<script id="touch-script-12">
-function __binding__1(query){
-	return query;
+    <button id="touch-button-8">Increment</button>
+    <p id="touch-p-9"></p>
+    <script type="module" id="touch-script-10">
+function __binding__1(count){
+	return "Count is: " + count;
 }
-function __update__query(){
-document.getElementById("touch-p-11").textContent = __binding__1(query)
+function __update__count(){
+document.getElementById("touch-p-9").textContent = __binding__1(count)
 }
-let query = "";
-__update__query();
-function search(){
-  console.log("you searched something");
-}document.getElementById("touch-input-10").addEventListener("input", (e) => { query = e.target.value; __update__query(); });
-document.getElementById("touch-input-10__form").addEventListener("submit", (e) => { e.preventDefault(); search() });
+let count = 0;
+__update__count();document.getElementById("touch-button-8").addEventListener("click", (e) => { count++; __update__count(); });
 
 </script>
 </body>
+</html>

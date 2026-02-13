@@ -40,6 +40,10 @@ const extractBind = (raw: string): string | undefined => {
 	return extractAttr(raw, 'bind');
 }
 
+const extractOnClick = (raw: string): string | undefined => {
+	return extractAttr(raw, 'onClick');
+}
+
 const extractDisplayIf = (raw: string): string | undefined => {
 	const bracePattern = /\bdisplay-if\s*=\s*{([^}]*)}/i;
 	const braceMatch = raw.match(bracePattern);
@@ -153,6 +157,7 @@ const parseHtml = (html: string): HtmlNode => {
 			displayIf: extractDisplayIf(attrText),
 			bind: extractBind(attrText),
 			onInput: extractOnInput(attrText),
+			onClick: extractOnClick(attrText),
 			content: '',
 			children: [],
 		};

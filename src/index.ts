@@ -1,5 +1,6 @@
 
 import * as fs from 'fs';
+import * as path from 'path';
 import { HtmlNode, parseHtml } from './parser';
 import { Variable } from './types';
 
@@ -26,8 +27,17 @@ function collectTree(node: HtmlNode, arr: HtmlNode[] = []): HtmlNode[] {
 	return arr;
 }
 
+const inputFileArg = process.argv[2];
+if (!inputFileArg) {
+	throw new Error('No input file provided. Usage: npm run dev -- <path/to/file.touch>');
+}
 
-let htmlContent = fs.readFileSync('./examples/input.touch', 'utf-8');
+const inputFilePath = path.resolve(process.cwd(), inputFileArg);
+if (!fs.existsSync(inputFilePath)) {
+	throw new Error(`Input file not found: ${inputFilePath}`);
+}
+
+let htmlContent = fs.readFileSync(inputFilePath, 'utf-8');
 const tree = parseHtml(htmlContent);
 const flatNodeArr = collectTree(tree);
 
@@ -47,6 +57,7 @@ while ((match = variableRegex.exec(scriptTag.content)) !== null) {
 }
 
 htmlContent = preprocessBindings(tree, htmlContent);
+htmlContent = stripBindingTextContent(tree, htmlContent);
 htmlContent = wrapInputsWithForm(tree, htmlContent);
 console.log(JSON.stringify(tree, null, 2));
 traverseTree(tree);
@@ -136,7 +147,28 @@ function stripDisplayIfAttributes(html: string): string {
 
 function stripBindAndOnInputAttributes(html: string): string {
 	const withoutBind = html.replace(/\s*\bbind\s*=\s*(?:\{[^}]*\}|"[^"]*"|'[^']*'|[^\s"'>]+)/gi, '');
-	return withoutBind.replace(/\s*\boninput\s*=\s*(?:\{[^}]*\}|"[^"]*"|'[^']*'|[^\s"'>]+)/gi, '');
+	const withoutOnInput = withoutBind.replace(/\s*\boninput\s*=\s*(?:\{[^}]*\}|"[^"]*"|'[^']*'|[^\s"'>]+)/gi, '');
+	return withoutOnInput.replace(/\s*\bonclick\s*=\s*(?:\{[^}]*\}|"[^"]*"|'[^']*'|[^\s"'>]+)/gi, '');
+}
+
+function stripBindingTextContent(node: HtmlNode, html: string): string {
+	let updatedHtml = html;
+	if (node.content.startsWith('{') && node.content.endsWith('}') && node.id) {
+		const escapedId = escapeRegExp(node.id);
+		const escapedContent = escapeRegExp(node.content.trim());
+		const attrPattern = '([^>]*?)';
+		const tagPattern = `<${node.tag}\\b${attrPattern}\\bid\\s*=\\s*(?:"${escapedId}"|'${escapedId}')${attrPattern}>\\s*${escapedContent}\\s*<\\/${node.tag}>`;
+		const regex = new RegExp(tagPattern, 'i');
+		updatedHtml = updatedHtml.replace(regex, (match, beforeId, afterId) => {
+			return `<${node.tag}${beforeId}id="${node.id}"${afterId}></${node.tag}>`;
+		});
+	}
+
+	for (const child of node.children) {
+		updatedHtml = stripBindingTextContent(child, updatedHtml);
+	}
+
+	return updatedHtml;
 }
 
 function addUpdateCalls(source: string, variable: Variable): string {
@@ -251,9 +283,21 @@ for(const node of flatNodeArr){
 	}
 	if(node.tag === 'input' && node.onInput){
 		const formId = `${node.id}__form`;
-		code += `document.getElementById("${formId}").addEventListener("submit", (e) => { e.preventDefault(); ${node.onInput.slice(1,-1).trim()} });\n`;
+		let handlerCode = node.onInput.slice(1,-1).trim();
+		for (const variable of variables) {
+			handlerCode = addUpdateCalls(handlerCode, variable);
+		}
+		code += `document.getElementById("${formId}").addEventListener("submit", (e) => { e.preventDefault(); ${handlerCode} });\n`;
+	}
+	if(node.tag === 'button' && node.onClick){
+		let handlerCode = node.onClick.slice(1,-1).trim();
+		for (const variable of variables) {
+			handlerCode = addUpdateCalls(handlerCode, variable);
+		}
+		code += `document.getElementById("${node.id}").addEventListener("click", (e) => { ${handlerCode} });\n`;
 	}
 }
+
 
 
 scriptTag.content = code;

@@ -11,3 +11,9 @@ Conditional Display: Specify a nodes display condition by adding display-if attr
 ### Functionality
 
 The compiler tracks what variables are bound to what HTML nodes and then update functions are injected , that update bound nodes content, these are called every time the variable is changed.
+
+### Usage
+
+Pass the input .touch file as a command line argument:
+
+npm run dev -- examples/input.touch

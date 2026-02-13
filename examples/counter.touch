@@ -6,14 +6,10 @@
     <title>Document</title>
 </head>
 <body>
-    <button id="btn">Increment</button>
+    <button onClick={count++}>Increment</button>
     <p>{"Count is: " + count}</p>
     <script type="module">
         Touch count = 0;
-        let button = document.getElementById('btn');
-        button.addEventListener('click', () => {
-            count++;
-        });
     </script>
 </body>
 </html>
