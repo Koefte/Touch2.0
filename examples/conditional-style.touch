@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conditional Styling</title>
+    <style>
+        .card {
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-family: system-ui, sans-serif;
+            max-width: 360px;
+        }
+        .status {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+        }
+        .active {
+            background: #e8f7ef;
+            color: #0f5132;
+        }
+        .inactive {
+            background: #fdecea;
+            color: #842029;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Conditional Styling</h2>
+        <p>Click to toggle state.</p>
+        <button onClick={toggle()}>Toggle</button>
+
+        <span class={statusClass}>{statusText}</span>
+    </div>
+
+    <script type="module">
+        Touch isActive = false;
+        Touch statusClass = "status inactive";
+        Touch statusText = "Inactive";
+
+        function toggle() {
+            isActive = !isActive;
+            statusClass = isActive ? "status active" : "status inactive";
+            statusText = isActive ? "Active" : "Inactive";
+        }
+    </script>
+</body>
+</html>

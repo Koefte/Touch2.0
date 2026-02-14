@@ -161,6 +161,10 @@ function stripBindAndOnInputAttributes(html: string): string {
 	return withoutOnInput.replace(/\s*\bonclick\s*=\s*(?:\{[^}]*\}|"[^"]*"|'[^']*'|[^\s"'>]+)/gi, '');
 }
 
+function stripClassBindingAttributes(html: string): string {
+	return html.replace(/\s*\bclass\s*=\s*(?:\{[^}]*\}|"\{[^}]*\}"|'\{[^}]*\}')/gi, '');
+}
+
 function stripForAttributes(html: string): string {
 	return html.replace(/\s+for\s*=\s*(?:\{[^}]*\}|"[^"]*"|'[^']*'|[^\s"'>]+)/gi, '');
 }
@@ -237,7 +241,18 @@ function traverseTree(node: HtmlNode, insideFor = false) {
 				id: `__binding__${bindings.length + 1}`,
 				expression: condition,
 				node,
-				variables: variables.filter(v => condition.includes(v.name)).map(v => v.name)
+				variables: variables.filter(v => condition.includes(v.name)).map(v => v.name),
+				type: 'display-if'
+			});
+		}
+		if (node.classBinding !== undefined) {
+			const expression = node.classBinding.slice(1, -1).trim();
+			bindings.push({
+				id: `__binding__${bindings.length + 1}`,
+				expression,
+				node,
+				variables: variables.filter(v => expression.includes(v.name)).map(v => v.name),
+				type: 'class'
 			});
 		}
 		if(node.content.startsWith('{') && node.content.endsWith('}')){
@@ -247,7 +262,8 @@ function traverseTree(node: HtmlNode, insideFor = false) {
 				id: `__binding__${bindings.length + 1}`,
 				expression,
 				node,
-				variables: variables.filter(v => expression.includes(v.name)).map(v => v.name)
+				variables: variables.filter(v => expression.includes(v.name)).map(v => v.name),
+				type: 'text'
 			});
 		}
 	}
@@ -346,19 +362,19 @@ if (forDirectives.length > 0) {
 for(const variable of variables){
 	let functionCode = `function __update__${variable.name}(){\n`;
 	for(const binding of bindings){
-		console.log(binding.node)
-		if(binding.node.displayIf !== undefined){
-			const condition = binding.node.displayIf.slice(1, -1).trim();
-			if (binding.expression === condition) {
-				functionCode += `if(${condition}){\n`;
-				functionCode += `\tdocument.getElementById("${binding.node.id}").style.display = "";\n`;
-				functionCode += `} else {\n`;
-				functionCode += `\tdocument.getElementById("${binding.node.id}").style.display = "none";\n`;
-				functionCode += `}\n`;
-				continue;
-			}
+		if (!binding.variables.includes(variable.name)) continue;
+		if (binding.type === 'display-if') {
+			functionCode += `if(${binding.id}(${binding.variables.join(', ')})){\n`;
+			functionCode += `\tdocument.getElementById("${binding.node.id}").style.display = "";\n`;
+			functionCode += `} else {\n`;
+			functionCode += `\tdocument.getElementById("${binding.node.id}").style.display = "none";\n`;
+			functionCode += `}\n`;
+			continue;
 		}
-		if(!binding.node.content.slice(1, -1).trim().includes(variable.name)) continue;
+		if (binding.type === 'class') {
+			functionCode += `document.getElementById("${binding.node.id}").className = ${binding.id}(${binding.variables.join(', ')})\n`;
+			continue;
+		}
 		functionCode += `document.getElementById("${binding.node.id}").textContent = ${binding.id}(${binding.variables.join(', ')})\n`
 	}
 	for (const directive of forDirectives) {
@@ -412,6 +428,7 @@ let updatedHtml = htmlContent.replace(
 
 updatedHtml = stripDisplayIfAttributes(updatedHtml);
 updatedHtml = stripBindAndOnInputAttributes(updatedHtml);
+updatedHtml = stripClassBindingAttributes(updatedHtml);
 updatedHtml = stripForAttributes(updatedHtml);
 
 fs.writeFileSync('./out.html', updatedHtml, 'utf-8');

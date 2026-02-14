@@ -1,9 +1,10 @@
 export type HtmlNode = {
 	tag: string;
 	id?: string;
-    displayIf?:string;
+    displayIf?: string;
+    classBinding?: string;
     bind?: string;
-    onInput?: string; 
+    onInput?: string;
     onClick?: string;
     for?: string;
 	content: string;
@@ -15,6 +16,7 @@ export type Binding = {
     expression: string;
     node: HtmlNode;
     variables: string[];
+    type: 'display-if' | 'text' | 'class';
 }
 
 export type Variable = {

@@ -278,56 +278,31 @@ function __binding__7(results){
 	return results.length > 0;
 }
 function __update__error(){
-if(!loading && results.length > 0){
-	document.getElementById("touch-div-17").style.display = "";
-} else {
-	document.getElementById("touch-div-17").style.display = "none";
-}
-if(loading){
-	document.getElementById("touch-div-18").style.display = "";
-} else {
-	document.getElementById("touch-div-18").style.display = "none";
-}
-if(error !== ""){
+if(__binding__4(error)){
 	document.getElementById("touch-div-19").style.display = "";
 } else {
 	document.getElementById("touch-div-19").style.display = "none";
 }
 document.getElementById("touch-div-19").textContent = __binding__5(error)
-if(!loading && results.length === 0 && query.trim().length > 0 && error === ""){
+if(__binding__6(query, loading, results, error)){
 	document.getElementById("touch-div-20").style.display = "";
 } else {
 	document.getElementById("touch-div-20").style.display = "none";
 }
-if(results.length > 0){
-	document.getElementById("touch-ul-21").style.display = "";
-} else {
-	document.getElementById("touch-ul-21").style.display = "none";
-}
 }
 function __update__results(){
-if(!loading && results.length > 0){
+if(__binding__1(loading, results)){
 	document.getElementById("touch-div-17").style.display = "";
 } else {
 	document.getElementById("touch-div-17").style.display = "none";
 }
 document.getElementById("touch-div-17").textContent = __binding__2(results)
-if(loading){
-	document.getElementById("touch-div-18").style.display = "";
-} else {
-	document.getElementById("touch-div-18").style.display = "none";
-}
-if(error !== ""){
-	document.getElementById("touch-div-19").style.display = "";
-} else {
-	document.getElementById("touch-div-19").style.display = "none";
-}
-if(!loading && results.length === 0 && query.trim().length > 0 && error === ""){
+if(__binding__6(query, loading, results, error)){
 	document.getElementById("touch-div-20").style.display = "";
 } else {
 	document.getElementById("touch-div-20").style.display = "none";
 }
-if(results.length > 0){
+if(__binding__7(results)){
 	document.getElementById("touch-ul-21").style.display = "";
 } else {
 	document.getElementById("touch-ul-21").style.display = "none";
@@ -335,57 +310,27 @@ if(results.length > 0){
 __render__for__touch_li_22();
 }
 function __update__loading(){
-if(!loading && results.length > 0){
+if(__binding__1(loading, results)){
 	document.getElementById("touch-div-17").style.display = "";
 } else {
 	document.getElementById("touch-div-17").style.display = "none";
 }
-if(loading){
+if(__binding__3(loading)){
 	document.getElementById("touch-div-18").style.display = "";
 } else {
 	document.getElementById("touch-div-18").style.display = "none";
 }
-if(error !== ""){
-	document.getElementById("touch-div-19").style.display = "";
-} else {
-	document.getElementById("touch-div-19").style.display = "none";
-}
-if(!loading && results.length === 0 && query.trim().length > 0 && error === ""){
+if(__binding__6(query, loading, results, error)){
 	document.getElementById("touch-div-20").style.display = "";
 } else {
 	document.getElementById("touch-div-20").style.display = "none";
-}
-if(results.length > 0){
-	document.getElementById("touch-ul-21").style.display = "";
-} else {
-	document.getElementById("touch-ul-21").style.display = "none";
 }
 }
 function __update__query(){
-if(!loading && results.length > 0){
-	document.getElementById("touch-div-17").style.display = "";
-} else {
-	document.getElementById("touch-div-17").style.display = "none";
-}
-if(loading){
-	document.getElementById("touch-div-18").style.display = "";
-} else {
-	document.getElementById("touch-div-18").style.display = "none";
-}
-if(error !== ""){
-	document.getElementById("touch-div-19").style.display = "";
-} else {
-	document.getElementById("touch-div-19").style.display = "none";
-}
-if(!loading && results.length === 0 && query.trim().length > 0 && error === ""){
+if(__binding__6(query, loading, results, error)){
 	document.getElementById("touch-div-20").style.display = "";
 } else {
 	document.getElementById("touch-div-20").style.display = "none";
-}
-if(results.length > 0){
-	document.getElementById("touch-ul-21").style.display = "";
-} else {
-	document.getElementById("touch-ul-21").style.display = "none";
 }
 }
 let query = "Alien";

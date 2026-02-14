@@ -70,6 +70,23 @@ const extractDisplayIf = (raw: string): string | undefined => {
 	return extractAttr(raw, 'display-if');
 };
 
+const extractClassBinding = (raw: string): string | undefined => {
+	const bracePattern = /\bclass\s*=\s*{([^}]*)}/i;
+	const braceMatch = raw.match(bracePattern);
+	if (braceMatch) {
+		return `{${braceMatch[1].trim()}}`;
+	}
+	const value = extractAttr(raw, 'class');
+	if (!value) {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+		return trimmed;
+	}
+	return undefined;
+};
+
 
 
 const findTagEnd = (html: string, startIndex: number): number => {
@@ -174,6 +191,7 @@ const parseHtml = (html: string): HtmlNode => {
 			tag: tagName,
 			id: extractId(attrText),
 			displayIf: extractDisplayIf(attrText),
+			classBinding: extractClassBinding(attrText),
 			bind: extractBind(attrText),
 			onInput: extractOnInput(attrText),
 			onClick: extractOnClick(attrText),
